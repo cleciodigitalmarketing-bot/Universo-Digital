@@ -1,3 +1,67 @@
-const seed=[{id:crypto.randomUUID(),name:'Resina LAB',category:'Mais vendidos',image:'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=900&q=80',description:'Treinamento digital para quem busca uma habilidade prática e com alta procura no mercado.',link:'#'},{id:crypto.randomUUID(),name:'Método de Marketing Digital',category:'Mais queridos',image:'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=900&q=80',description:'Aprenda estratégias para atrair clientes, criar presença digital e vender melhor pela internet.',link:'#'},{id:crypto.randomUUID(),name:'Curso de Doces Finos',category:'Renda extra',image:'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?auto=format&fit=crop&w=900&q=80',description:'Ideal para transformar conhecimento culinário em renda extra com produtos de alto valor percebido.',link:'#'},{id:crypto.randomUUID(),name:'Treinamento Web Developer',category:'Tecnologia',image:'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=900&q=80',description:'Conteúdo para quem deseja iniciar ou evoluir no desenvolvimento web e criar projetos digitais.',link:'#'}];
-function getProducts(){let p=JSON.parse(localStorage.getItem('products')||'null');if(!p){localStorage.setItem('products',JSON.stringify(seed));p=seed}return p}function setProducts(p){localStorage.setItem('products',JSON.stringify(p))}
-function renderPublic(){const grid=document.getElementById('productGrid');if(!grid)return;let products=getProducts();let cats=['Todos',...new Set(products.map(p=>p.category))];let active='Todos';const filters=document.getElementById('categoryFilters');function draw(){filters.innerHTML=cats.map(c=>`<button class="chip ${c===active?'active':''}" data-cat="${c}">${c}</button>`).join('');let list=active==='Todos'?products:products.filter(p=>p.category===active);grid.innerHTML=list.map(p=>`<article class="product"><img src="${p.image}" onerror="this.src='https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80'"><div class="body"><span class="tag">${p.category}</span><h3>${p.name}</h3><p>${p.description}</p><a class="buy" target="_blank" href="${p.link||'#'}">Comprar agora</a></div></article>`).join('')||'<p>Nenhum produto nessa categoria.</p>';document.getElementById('heroProduct').textContent=products[0]?.name||'Cadastre um produto no painel.';document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{active=b.dataset.cat;draw()})}draw();document.getElementById('year').textContent=new Date().getFullYear()}renderPublic();
+const supabaseClient = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+const productsGrid = document.getElementById('productsGrid');
+const categoryFilters = document.getElementById('categoryFilters');
+const searchInput = document.getElementById('searchInput');
+const emptyState = document.getElementById('emptyState');
+let categories = [];
+let products = [];
+let selectedCategory = 'all';
+
+function escapeHtml(text = '') {
+  return String(text).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));
+}
+
+async function loadData() {
+  const [{ data: cats, error: catError }, { data: prods, error: prodError }] = await Promise.all([
+    supabaseClient.from('categories').select('*').order('created_at', { ascending: true }),
+    supabaseClient.from('products').select('*, categories(name)').order('created_at', { ascending: false })
+  ]);
+  if (catError || prodError) {
+    productsGrid.innerHTML = '<div class="empty">Erro ao carregar produtos. Verifique o arquivo assets/config.js e o SQL do Supabase.</div>';
+    return;
+  }
+  categories = cats || [];
+  products = prods || [];
+  renderCategories();
+  renderProducts();
+}
+
+function renderCategories() {
+  const all = `<button class="chip active" data-id="all">Todos</button>`;
+  categoryFilters.innerHTML = all + categories.map(c => `<button class="chip" data-id="${c.id}">${escapeHtml(c.name)}</button>`).join('');
+  categoryFilters.querySelectorAll('.chip').forEach(btn => {
+    btn.onclick = () => {
+      selectedCategory = btn.dataset.id;
+      categoryFilters.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderProducts();
+    };
+  });
+}
+
+function renderProducts() {
+  const term = (searchInput.value || '').toLowerCase().trim();
+  const filtered = products.filter(p => {
+    const categoryOk = selectedCategory === 'all' || p.category_id === selectedCategory;
+    const text = `${p.title} ${p.description || ''} ${p.categories?.name || ''}`.toLowerCase();
+    return categoryOk && text.includes(term);
+  });
+  emptyState.classList.toggle('hidden', filtered.length > 0);
+  productsGrid.innerHTML = filtered.map(p => `
+    <article class="product-card">
+      <div class="image-wrap">
+        ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ''}
+        <img src="${escapeHtml(p.image_url || '')}" alt="${escapeHtml(p.title)}" loading="lazy" />
+      </div>
+      <div class="product-body">
+        <small>${escapeHtml(p.categories?.name || 'Produto digital')}</small>
+        <h3>${escapeHtml(p.title)}</h3>
+        <p>${escapeHtml(p.description || '')}</p>
+        <a class="buy-btn" href="${escapeHtml(p.affiliate_url)}" target="_blank" rel="noopener sponsored">Comprar agora</a>
+      </div>
+    </article>
+  `).join('');
+}
+
+searchInput.addEventListener('input', renderProducts);
+loadData();

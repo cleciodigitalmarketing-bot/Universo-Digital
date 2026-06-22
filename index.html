@@ -1,1 +1,75 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vitrine Digital Pro | Cursos e Infoprodutos</title><link rel="stylesheet" href="assets/style.css"></head><body><header class="topbar"><div class="brand"><div class="logo">VD</div><div><strong>Vitrine Digital Pro</strong><span>Os infoprodutos mais procurados em um só lugar</span></div></div><nav><a href="#produtos">Produtos</a><a href="#categorias">Categorias</a><a href="admin/index.html" class="admin-link">Painel Admin</a></nav></header><section class="hero"><div class="hero-content"><span class="badge">🔥 Produtos em alta</span><h1>Escolha cursos, treinamentos e ferramentas digitais que podem acelerar seus resultados.</h1><p>Uma vitrine profissional com ofertas selecionadas, descrição persuasiva e botão direto para compra segura na página oficial do produtor.</p><div class="hero-actions"><a href="#produtos" class="btn primary">Ver ofertas agora</a><a href="#categorias" class="btn secondary">Explorar categorias</a></div><div class="trust"><span>✅ Compra na página oficial</span><span>⭐ Produtos selecionados</span><span>🚀 Acesso digital</span></div></div><div class="hero-card"><h3>Oferta destaque</h3><p id="heroProduct">Carregando produto...</p><small>Atualizado pelo painel administrativo</small></div></section><section class="section" id="categorias"><div class="section-title"><h2>Categorias estratégicas</h2><p>Filtre pelas vitrines criadas no painel.</p></div><div id="categoryFilters" class="chips"></div></section><section class="section" id="produtos"><div class="section-title"><h2>Produtos recomendados</h2><p>Não exibimos comissão. O foco é apresentar valor e levar o visitante para a compra.</p></div><div id="productGrid" class="grid"></div></section><section class="conversion"><h2>Por que comprar por essa vitrine?</h2><div><article><b>Curadoria</b><p>Produtos organizados por interesse e procura.</p></article><article><b>Agilidade</b><p>Você acessa direto a página oficial de venda.</p></article><article><b>Clareza</b><p>Descrição objetiva antes de clicar em comprar.</p></article></div></section><footer>© <span id="year"></span> Vitrine Digital Pro. Este site pode conter links de afiliado.</footer><script src="assets/app.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Impulso Digital | Cursos e Produtos Online</title>
+  <meta name="description" content="Vitrine profissional de cursos, mentorias e produtos digitais selecionados." />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./"><span>⚡</span> Impulso Digital</a>
+    <nav>
+      <a href="#produtos">Produtos</a>
+      <a href="#categorias">Categorias</a>
+      <a href="admin/">Admin</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">🔥 Seleção dos produtos digitais mais procurados</p>
+        <h1>Escolha o conhecimento certo para acelerar sua vida profissional.</h1>
+        <p class="hero-text">Cursos, métodos, treinamentos e mentorias organizados em uma vitrine simples, segura e objetiva.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#produtos">Ver produtos em alta</a>
+          <a class="btn secondary" href="#categorias">Explorar categorias</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <strong>Mais procurados hoje</strong>
+        <span>✅ Compra pela página oficial</span>
+        <span>✅ Acesso digital rápido</span>
+        <span>✅ Conteúdos selecionados</span>
+      </div>
+    </section>
+
+    <section class="trust">
+      <div><b>+ Produtos</b><span> atualizados pelo painel</span></div>
+      <div><b>Categorias</b><span> personalizadas</span></div>
+      <div><b>Links</b><span> diretos de afiliado</span></div>
+    </section>
+
+    <section id="categorias" class="section">
+      <div class="section-title">
+        <p>Encontre rápido</p>
+        <h2>Categorias</h2>
+      </div>
+      <div id="categoryFilters" class="chips"></div>
+    </section>
+
+    <section id="produtos" class="section">
+      <div class="section-title">
+        <p>Vitrine de oportunidades</p>
+        <h2>Produtos em destaque</h2>
+      </div>
+      <div class="search-row">
+        <input id="searchInput" type="search" placeholder="Buscar produto, curso ou treinamento..." />
+      </div>
+      <div id="productsGrid" class="grid"></div>
+      <div id="emptyState" class="empty hidden">Nenhum produto encontrado.</div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>Impulso Digital</strong>
+    <span>Vitrine independente de produtos digitais. As compras são realizadas nas páginas oficiais dos produtores.</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

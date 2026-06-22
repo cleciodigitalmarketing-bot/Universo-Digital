@@ -1,13 +1,45 @@
-# Vitrine Digital Pro - Hotmart Afiliados
+# Impulso Digital — Hotmart Afiliados Nível 3
 
-Site e-commerce/vitrine para produtos digitais afiliados, com painel administrativo local.
+Projeto completo com Cloudflare Pages + Supabase Database + Supabase Storage + Supabase Auth.
 
-## Como usar
-1. Envie a pasta para um repositório no GitHub.
-2. No Cloudflare Pages, conecte o repositório.
-3. Build command: deixe vazio.
-4. Build output directory: `/`.
-5. Acesse `/admin` para cadastrar, editar ou remover produtos.
+## Recursos
+
+- Vitrine pública de produtos digitais.
+- Categorias dinâmicas.
+- Botão Comprar agora com link de afiliado Hotmart.
+- Painel Admin protegido por login Supabase.
+- Cadastro, edição e remoção de produtos.
+- Upload de imagem no cadastro.
+- Substituição de imagem na edição.
+- Remoção da imagem antiga do Storage ao trocar/remover produto.
+
+## Como configurar o Supabase
+
+1. Crie um projeto no Supabase.
+2. Abra SQL Editor.
+3. Execute o arquivo `supabase/schema.sql`.
+4. Vá em Authentication > Users.
+5. Clique em Add user e crie seu e-mail e senha de administrador.
+6. Vá em Project Settings > API.
+7. Copie:
+   - Project URL
+   - anon public key
+8. Abra `assets/config.js` e cole os dados.
+
+## Deploy no Cloudflare Pages
+
+Como é HTML, CSS e JS puro:
+
+- Framework preset: None / Nenhum
+- Build command: deixe vazio
+- Build output directory: `/` ou deixe vazio
+- Root directory: deixe vazio se o `index.html` estiver na raiz do repositório
+
+## Acesso
+
+- Site: `/`
+- Painel Admin: `/admin/`
 
 ## Importante
-Esta primeira versão salva os produtos no navegador usando LocalStorage. Para uso profissional com vários dispositivos, o ideal é integrar Supabase.
+
+Não coloque `service_role_key` no frontend. Use somente a `anon public key`.
