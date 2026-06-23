@@ -9,7 +9,8 @@
 <body class="admin-body">
   <div id="loginView" class="login-page">
     <form id="loginForm" class="login-card">
-      <h1>⚡ Painel Admin</h1>
+      <img class="login-logo" src="../assets/logo.svg" alt="Impulso Digital">
+      <h1>Painel Admin</h1>
       <p class="notice">Entre com o e-mail e senha criados em Authentication no Supabase.</p>
       <div class="field"><label>E-mail</label><input id="email" type="email" required placeholder="admin@email.com"></div>
       <div class="field"><label>Senha</label><input id="password" type="password" required placeholder="Sua senha"></div>
@@ -20,9 +21,25 @@
 
   <div id="adminView" class="admin-wrap hidden">
     <header class="admin-header">
-      <div><a class="brand" href="../"><span>⚡</span> Impulso Digital</a><p>Cadastro, edição e remoção de produtos Hotmart.</p></div>
+      <div><a class="brand" href="../"><img src="../assets/logo.svg" alt="Impulso Digital"></a><p>Painel para produtos, categorias, imagens e métricas de visitantes.</p></div>
       <button id="logoutBtn" class="ghost">Sair</button>
     </header>
+
+    <section class="panel dashboard-panel">
+      <div class="section-title compact"><div><p>Visão geral</p><h2>Dashboard</h2></div></div>
+      <div class="stats-grid">
+        <div class="stat"><strong id="statProducts">0</strong><span>Produtos</span></div>
+        <div class="stat"><strong id="statCategories">0</strong><span>Categorias</span></div>
+        <div class="stat"><strong id="statVisitors">0</strong><span>Visitantes registrados</span></div>
+        <div class="stat"><strong id="statClicks">0</strong><span>Cliques em comprar</span></div>
+      </div>
+      <div class="analytics-grid">
+        <div><h3>Visitantes por cidade</h3><div id="citiesList" class="metric-list"></div></div>
+        <div><h3>Origem dos acessos</h3><div id="referrersList" class="metric-list"></div></div>
+        <div><h3>Produtos mais clicados</h3><div id="clicksList" class="metric-list"></div></div>
+      </div>
+      <p class="hint">As cidades e origens dependem das informações disponíveis no navegador e no serviço público de geolocalização por IP.</p>
+    </section>
 
     <div class="admin-grid">
       <section class="panel">
@@ -44,7 +61,7 @@
             <div class="field"><label>Título</label><input id="title" required placeholder="Nome do produto"></div>
             <div class="field"><label>Categoria</label><select id="categorySelect" required></select></div>
           </div>
-          <div class="field"><label>Descrição com gatilho de venda</label><textarea id="description" rows="4" required placeholder="Explique o benefício principal do produto..."></textarea></div>
+          <div class="field"><label>Descrição do produto</label><textarea id="description" rows="5" required placeholder="Fale o que o produto entrega, para quem serve e qual transformação ele oferece..."></textarea></div>
           <div class="row">
             <div class="field"><label>Link de afiliado Hotmart</label><input id="affiliateUrl" type="url" required placeholder="https://go.hotmart.com/..."></div>
             <div class="field"><label>Selo opcional</label><input id="badge" placeholder="🔥 Mais vendido"></div>

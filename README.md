@@ -1,45 +1,50 @@
-# Impulso Digital — Hotmart Afiliados Nível 3
+# Impulso Digital - Supabase Nível 3
 
-Projeto completo com Cloudflare Pages + Supabase Database + Supabase Storage + Supabase Auth.
+Projeto de vitrine/e-commerce para produtos digitais afiliados, com layout minimalista, painel administrativo e Supabase.
 
 ## Recursos
 
-- Vitrine pública de produtos digitais.
-- Categorias dinâmicas.
-- Botão Comprar agora com link de afiliado Hotmart.
-- Painel Admin protegido por login Supabase.
+- Layout branco, minimalista e responsivo.
+- Logo profissional em SVG: `assets/logo.svg`.
+- Produtos separados por categorias.
+- Descrição visível em cada produto.
+- Botão **Comprar agora** redirecionando para o link de afiliado.
+- Painel admin com login Supabase Auth.
+- Cadastro, edição e remoção de categorias.
 - Cadastro, edição e remoção de produtos.
-- Upload de imagem no cadastro.
-- Substituição de imagem na edição.
-- Remoção da imagem antiga do Storage ao trocar/remover produto.
+- Upload e troca de imagem usando Supabase Storage.
+- Dashboard com:
+  - total de produtos;
+  - total de categorias;
+  - visitantes registrados;
+  - cliques no botão comprar;
+  - visitantes por cidade;
+  - origem dos acessos/referrer/UTM;
+  - produtos mais clicados.
 
-## Como configurar o Supabase
+## Configuração
 
 1. Crie um projeto no Supabase.
-2. Abra SQL Editor.
-3. Execute o arquivo `supabase/schema.sql`.
-4. Vá em Authentication > Users.
-5. Clique em Add user e crie seu e-mail e senha de administrador.
-6. Vá em Project Settings > API.
-7. Copie:
-   - Project URL
-   - anon public key
-8. Abra `assets/config.js` e cole os dados.
+2. Abra `supabase/schema.sql` e execute todo o SQL no **SQL Editor**.
+3. Crie um usuário em **Authentication > Users** e confirme o e-mail.
+4. Edite `assets/config.js`:
 
-## Deploy no Cloudflare Pages
+```js
+window.SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+window.SUPABASE_ANON_KEY = 'SUA_ANON_PUBLIC_KEY';
+```
 
-Como é HTML, CSS e JS puro:
+5. Envie o projeto para o GitHub e faça deploy no Cloudflare Pages.
+
+## Cloudflare Pages
+
+Como o projeto é HTML, CSS e JavaScript puro:
 
 - Framework preset: None / Nenhum
-- Build command: deixe vazio
-- Build output directory: `/` ou deixe vazio
-- Root directory: deixe vazio se o `index.html` estiver na raiz do repositório
+- Build command: vazio
+- Build output directory: `/` ou vazio
+- Root directory: use a pasta do projeto se o `index.html` não estiver na raiz do repositório
 
-## Acesso
+## Observação sobre visitantes
 
-- Site: `/`
-- Painel Admin: `/admin/`
-
-## Importante
-
-Não coloque `service_role_key` no frontend. Use somente a `anon public key`.
+A cidade do visitante é estimada por IP usando uma consulta pública no navegador. Em alguns casos pode aparecer como “Não identificado”, dependendo da rede, VPN, bloqueios de privacidade ou falha do serviço externo.

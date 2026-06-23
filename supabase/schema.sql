@@ -20,8 +20,40 @@ create table if not exists public.products (
   created_at timestamptz not null default now()
 );
 
+-- Métricas de visitantes do site.
+create table if not exists public.site_visits (
+  id uuid primary key default gen_random_uuid(),
+  page text,
+  referrer text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  city text,
+  region text,
+  country text,
+  language text,
+  timezone text,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+-- Cliques no botão Comprar agora.
+create table if not exists public.product_clicks (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid references public.products(id) on delete set null,
+  product_title text,
+  visit_id uuid references public.site_visits(id) on delete set null,
+  referrer text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  created_at timestamptz not null default now()
+);
+
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
+alter table public.site_visits enable row level security;
+alter table public.product_clicks enable row level security;
 
 -- Leitura pública para a vitrine do site.
 drop policy if exists "Public can read categories" on public.categories;
@@ -30,7 +62,7 @@ create policy "Public can read categories" on public.categories for select using
 drop policy if exists "Public can read products" on public.products;
 create policy "Public can read products" on public.products for select using (true);
 
--- Somente usuários logados no Supabase Auth podem administrar.
+-- Somente usuários logados no Supabase Auth podem administrar categorias e produtos.
 drop policy if exists "Authenticated can insert categories" on public.categories;
 create policy "Authenticated can insert categories" on public.categories for insert to authenticated with check (true);
 
@@ -48,6 +80,19 @@ create policy "Authenticated can update products" on public.products for update 
 
 drop policy if exists "Authenticated can delete products" on public.products;
 create policy "Authenticated can delete products" on public.products for delete to authenticated using (true);
+
+-- Analytics: qualquer visitante pode registrar acesso/clique, mas só admin logado consegue ler.
+drop policy if exists "Public can insert site visits" on public.site_visits;
+create policy "Public can insert site visits" on public.site_visits for insert to anon, authenticated with check (true);
+
+drop policy if exists "Authenticated can read site visits" on public.site_visits;
+create policy "Authenticated can read site visits" on public.site_visits for select to authenticated using (true);
+
+drop policy if exists "Public can insert product clicks" on public.product_clicks;
+create policy "Public can insert product clicks" on public.product_clicks for insert to anon, authenticated with check (true);
+
+drop policy if exists "Authenticated can read product clicks" on public.product_clicks;
+create policy "Authenticated can read product clicks" on public.product_clicks for select to authenticated using (true);
 
 -- Bucket público para imagens dos produtos.
 insert into storage.buckets (id, name, public)
@@ -72,5 +117,6 @@ insert into public.categories (name) values
 ('🔥 Mais vendidos'),
 ('❤️ Queridinhos'),
 ('🚀 Em alta'),
-('💼 Negócios e Marketing')
+('💼 Negócios e Marketing'),
+('🎓 Cursos Profissionais')
 on conflict do nothing;

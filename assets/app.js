@@ -6,9 +6,55 @@ const emptyState = document.getElementById('emptyState');
 let categories = [];
 let products = [];
 let selectedCategory = 'all';
+let visitId = null;
 
 function escapeHtml(text = '') {
   return String(text).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));
+}
+
+async function getGeoInfo(){
+  try{
+    const res = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+    if(!res.ok) return {};
+    const data = await res.json();
+    return { city: data.city || null, region: data.region || null, country: data.country_name || null };
+  }catch{ return {}; }
+}
+
+function getUtm(){
+  const p = new URLSearchParams(location.search);
+  return { utm_source: p.get('utm_source'), utm_medium: p.get('utm_medium'), utm_campaign: p.get('utm_campaign') };
+}
+
+async function trackVisit(){
+  try{
+    const currentSession = sessionStorage.getItem('impulso_visit_id');
+    if(currentSession){ visitId = currentSession; return; }
+    const geo = await getGeoInfo();
+    const payload = {
+      page: location.pathname,
+      referrer: document.referrer || 'Acesso direto',
+      language: navigator.language || null,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+      user_agent: navigator.userAgent || null,
+      ...getUtm(),
+      ...geo
+    };
+    const { data, error } = await supabaseClient.from('site_visits').insert(payload).select('id').single();
+    if(!error && data?.id){ visitId = data.id; sessionStorage.setItem('impulso_visit_id', data.id); }
+  }catch(err){ console.warn('Analytics indisponível:', err.message); }
+}
+
+async function trackProductClick(product){
+  try{
+    await supabaseClient.from('product_clicks').insert({
+      product_id: product.id,
+      product_title: product.title,
+      visit_id: visitId,
+      referrer: document.referrer || 'Acesso direto',
+      ...getUtm()
+    });
+  }catch(err){ console.warn('Clique não registrado:', err.message); }
 }
 
 async function loadData() {
@@ -17,7 +63,7 @@ async function loadData() {
     supabaseClient.from('products').select('*, categories(name)').order('created_at', { ascending: false })
   ]);
   if (catError || prodError) {
-    productsGrid.innerHTML = '<div class="empty">Erro ao carregar produtos. Verifique o arquivo assets/config.js e o SQL do Supabase.</div>';
+    productsGrid.innerHTML = '<div class="empty">Erro ao carregar produtos. Verifique o arquivo assets/config.js e execute o SQL atualizado no Supabase.</div>';
     return;
   }
   categories = cats || [];
@@ -27,7 +73,7 @@ async function loadData() {
 }
 
 function renderCategories() {
-  const all = `<button class="chip active" data-id="all">Todos</button>`;
+  const all = `<button class="chip active" data-id="all">Todos os produtos</button>`;
   categoryFilters.innerHTML = all + categories.map(c => `<button class="chip" data-id="${c.id}">${escapeHtml(c.name)}</button>`).join('');
   categoryFilters.querySelectorAll('.chip').forEach(btn => {
     btn.onclick = () => {
@@ -56,12 +102,19 @@ function renderProducts() {
       <div class="product-body">
         <small>${escapeHtml(p.categories?.name || 'Produto digital')}</small>
         <h3>${escapeHtml(p.title)}</h3>
-        <p>${escapeHtml(p.description || '')}</p>
-        <a class="buy-btn" href="${escapeHtml(p.affiliate_url)}" target="_blank" rel="noopener sponsored">Comprar agora</a>
+        <p class="product-desc">${escapeHtml(p.description || '')}</p>
+        <a class="buy-btn" data-product-id="${p.id}" href="${escapeHtml(p.affiliate_url)}" target="_blank" rel="noopener sponsored">Comprar agora</a>
       </div>
     </article>
   `).join('');
+  productsGrid.querySelectorAll('.buy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const product = products.find(p => p.id === btn.dataset.productId);
+      if(product) trackProductClick(product);
+    });
+  });
 }
 
 searchInput.addEventListener('input', renderProducts);
+trackVisit();
 loadData();

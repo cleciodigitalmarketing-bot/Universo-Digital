@@ -5,6 +5,19 @@ let products = [];
 
 function safe(text = '') { return String(text).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m])); }
 function fileExt(name){ return (name.split('.').pop() || 'jpg').toLowerCase(); }
+function originLabel(v){
+  if(v.utm_source) return `${v.utm_source}${v.utm_campaign ? ' / ' + v.utm_campaign : ''}`;
+  if(!v.referrer || v.referrer === 'Acesso direto') return 'Acesso direto';
+  try { return new URL(v.referrer).hostname.replace('www.',''); } catch { return v.referrer; }
+}
+function countBy(list, fn){
+  const map = new Map();
+  list.forEach(item => { const key = fn(item) || 'Não identificado'; map.set(key, (map.get(key) || 0) + 1); });
+  return [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+}
+function renderMetric(el, rows){
+  $(el).innerHTML = rows.length ? rows.map(([label,total]) => `<div class="metric"><span>${safe(label)}</span><b>${total}</b></div>`).join('') : '<p class="empty small">Sem dados ainda.</p>';
+}
 
 async function checkSession(){
   const { data } = await sb.auth.getSession();
@@ -20,16 +33,32 @@ $('loginForm').addEventListener('submit', async e => {
 });
 $('logoutBtn').onclick = async () => { await sb.auth.signOut(); await checkSession(); };
 
-async function loadAll(){ await Promise.all([loadCategories(), loadProducts()]); }
+async function loadAll(){ await Promise.all([loadCategories(), loadProducts()]); await loadAnalytics(); }
 async function loadCategories(){
   const { data, error } = await sb.from('categories').select('*').order('created_at', { ascending: true });
   if(error){ alert('Erro nas categorias: ' + error.message); return; }
-  categories = data || []; renderCategories(); renderCategorySelect();
+  categories = data || []; renderCategories(); renderCategorySelect(); $('statCategories').textContent = categories.length;
 }
 async function loadProducts(){
   const { data, error } = await sb.from('products').select('*, categories(name)').order('created_at', { ascending: false });
   if(error){ alert('Erro nos produtos: ' + error.message); return; }
-  products = data || []; renderProducts();
+  products = data || []; renderProducts(); $('statProducts').textContent = products.length;
+}
+async function loadAnalytics(){
+  const [{ data: visits, error: visitsError }, { data: clicks, error: clicksError }] = await Promise.all([
+    sb.from('site_visits').select('*').order('created_at', { ascending: false }).limit(1000),
+    sb.from('product_clicks').select('*').order('created_at', { ascending: false }).limit(1000)
+  ]);
+  if(visitsError || clicksError){
+    renderMetric('citiesList', []); renderMetric('referrersList', []); renderMetric('clicksList', []);
+    return;
+  }
+  const v = visits || [], c = clicks || [];
+  $('statVisitors').textContent = v.length;
+  $('statClicks').textContent = c.length;
+  renderMetric('citiesList', countBy(v, x => [x.city, x.region, x.country].filter(Boolean).join(' - ')));
+  renderMetric('referrersList', countBy(v, originLabel));
+  renderMetric('clicksList', countBy(c, x => x.product_title));
 }
 function renderCategorySelect(){
   $('categorySelect').innerHTML = '<option value="">Selecione</option>' + categories.map(c => `<option value="${c.id}">${safe(c.name)}</option>`).join('');
@@ -107,7 +136,7 @@ function renderProducts(){
   $('productsList').innerHTML = products.map(p => `
     <div class="item">
       <img src="${safe(p.image_url || '')}" alt="">
-      <div><h4>${safe(p.title)}</h4><p>${safe(p.categories?.name || 'Sem categoria')} • ${safe(p.badge || 'Sem selo')}</p></div>
+      <div><h4>${safe(p.title)}</h4><p>${safe(p.categories?.name || 'Sem categoria')} • ${safe(p.description || '').slice(0,120)}${(p.description || '').length > 120 ? '...' : ''}</p></div>
       <div class="actions"><button class="ghost" onclick="editProduct('${p.id}')">Editar</button><button class="danger" onclick="deleteProduct('${p.id}')">Remover</button></div>
     </div>`).join('') || '<p class="empty">Nenhum produto cadastrado.</p>';
 }
