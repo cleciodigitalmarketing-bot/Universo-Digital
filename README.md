@@ -48,3 +48,11 @@ Como o projeto é HTML, CSS e JavaScript puro:
 ## Observação sobre visitantes
 
 A cidade do visitante é estimada por IP usando uma consulta pública no navegador. Em alguns casos pode aparecer como “Não identificado”, dependendo da rede, VPN, bloqueios de privacidade ou falha do serviço externo.
+
+
+## Atualização visual e conversão
+
+- Cards dos produtos ajustados para mostrar a descrição completa, sem cortar o texto.
+- Adicionados gatilhos mentais de segurança, clareza, evolução, acesso digital e compra na página oficial.
+- Criada faixa de conversão antes da vitrine e chamada final para incentivar a escolha do produto.
+- Grade ajustada para 3 produtos por linha no desktop, deixando mais espaço para leitura.

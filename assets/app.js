@@ -94,7 +94,7 @@ function renderProducts() {
   });
   emptyState.classList.toggle('hidden', filtered.length > 0);
   productsGrid.innerHTML = filtered.map(p => `
-    <article class="product-card">
+    <article class="product-card full-desc">
       <div class="image-wrap">
         ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ''}
         <img src="${escapeHtml(p.image_url || '')}" alt="${escapeHtml(p.title)}" loading="lazy" />
@@ -102,7 +102,8 @@ function renderProducts() {
       <div class="product-body">
         <small>${escapeHtml(p.categories?.name || 'Produto digital')}</small>
         <h3>${escapeHtml(p.title)}</h3>
-        <p class="product-desc">${escapeHtml(p.description || '')}</p>
+        <p class="product-desc ${p.description ? '' : 'empty-desc'}">${escapeHtml(p.description || 'Descrição completa será exibida aqui quando cadastrada no painel.')}</p>
+        <div class="trust-marker"><span>✅ Página oficial</span><span>⚡ Acesso digital</span><span>🔒 Compra segura</span></div>
         <a class="buy-btn" data-product-id="${p.id}" href="${escapeHtml(p.affiliate_url)}" target="_blank" rel="noopener sponsored">Comprar agora</a>
       </div>
     </article>
