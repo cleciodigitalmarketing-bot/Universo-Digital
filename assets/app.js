@@ -3,6 +3,8 @@ const productsGrid = document.getElementById('productsGrid');
 const categoryFilters = document.getElementById('categoryFilters');
 const searchInput = document.getElementById('searchInput');
 const emptyState = document.getElementById('emptyState');
+const productModal = document.getElementById('productModal');
+const modalContent = document.getElementById('modalContent');
 let categories = [];
 let products = [];
 let selectedCategory = 'all';
@@ -103,6 +105,7 @@ function renderProducts() {
         <small>${escapeHtml(p.categories?.name || 'Produto digital')}</small>
         <h3>${escapeHtml(p.title)}</h3>
         <p class="product-desc ${p.description ? '' : 'empty-desc'}">${escapeHtml(p.description || 'Descrição completa será exibida aqui quando cadastrada no painel.')}</p>
+        <button class="details-btn" type="button" data-details-id="${p.id}">Ver detalhes e descrição completa</button>
         <div class="trust-marker"><span>✅ Página oficial</span><span>⚡ Acesso digital</span><span>🔒 Compra segura</span></div>
         <a class="buy-btn" data-product-id="${p.id}" href="${escapeHtml(p.affiliate_url)}" target="_blank" rel="noopener sponsored">Comprar agora</a>
       </div>
@@ -114,7 +117,41 @@ function renderProducts() {
       if(product) trackProductClick(product);
     });
   });
+  productsGrid.querySelectorAll('.details-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const product = products.find(p => p.id === btn.dataset.detailsId);
+      if(product) openProductModal(product);
+    });
+  });
 }
+
+function openProductModal(p){
+  modalContent.innerHTML = `
+    <div class="modal-product">
+      <div class="modal-image"><img src="${escapeHtml(p.image_url || '')}" alt="${escapeHtml(p.title)}"></div>
+      <div class="modal-info">
+        <small>${escapeHtml(p.categories?.name || 'Produto digital')}</small>
+        <h2>${escapeHtml(p.title)}</h2>
+        <div class="modal-trust"><span>✅ Página oficial</span><span>⚡ Acesso digital</span><span>🔒 Compra segura</span></div>
+        <p class="modal-desc">${escapeHtml(p.description || 'Descrição completa será exibida aqui quando cadastrada no painel.')}</p>
+        <a class="modal-buy" data-product-id="${p.id}" href="${escapeHtml(p.affiliate_url)}" target="_blank" rel="noopener sponsored">Comprar agora</a>
+      </div>
+    </div>
+  `;
+  productModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  const buy = modalContent.querySelector('.modal-buy');
+  buy.addEventListener('click', () => trackProductClick(p));
+}
+
+function closeProductModal(){
+  productModal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+document.querySelectorAll('[data-close-modal]').forEach(el => el.addEventListener('click', closeProductModal));
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !productModal.classList.contains('hidden')) closeProductModal(); });
+
 
 searchInput.addEventListener('input', renderProducts);
 trackVisit();

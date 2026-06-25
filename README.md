@@ -1,4 +1,4 @@
-# Impulso Learning - Supabase Nível 3
+# EvoluaHub - Supabase Nível 3
 
 Projeto de vitrine/e-commerce para produtos digitais afiliados, com layout minimalista, painel administrativo e Supabase.
 
@@ -59,13 +59,13 @@ A cidade do visitante é estimada por IP usando uma consulta pública no navegad
 
 ## Atualização visual v2.0
 
-Esta versão foi refinada com a marca **Impulso Learning**, nova logomarca em SVG, seções adicionais de copywriting, gatilhos de confiança e cards de produto com descrição completa visível.
+Esta versão foi refinada com a marca **EvoluaHub**, nova logomarca em SVG, seções adicionais de copywriting, gatilhos de confiança e cards de produto com descrição completa visível.
 
 Principais ajustes:
-- Novo nome da marca: Impulso Learning.
+- Novo nome da marca: EvoluaHub.
 - Logomarca vetorial exclusiva em `assets/logo.svg`.
 - Hero com copy principal: “Aprenda hoje. Evolua para sempre.”
-- Seção “Por que escolher a Impulso Learning?”.
+- Seção “Por que escolher a EvoluaHub?”.
 - Cards de produto com descrição completa, sem corte.
 - Rodapé limpo, sem redes sociais ou contatos não utilizados.
 - Layout branco, minimalista, com efeitos suaves e foco em conversão.
