@@ -33,3 +33,16 @@ footer{width:min(1280px,94%);display:grid;grid-template-columns:auto 1fr;justify
 @media(max-width:1180px){.grid{grid-template-columns:repeat(3,1fr)}.hero.clean-hero{grid-template-columns:1fr}.hero-visual{min-height:300px}.benefits-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:850px){main{width:min(100% - 28px,720px)}.topbar{padding:12px 18px}.brand img{width:190px}.grid,.trust.soft-panel,.conversion-strip,.benefits-grid,.modal-product{grid-template-columns:1fr}.image-wrap{height:250px}.product-body{min-height:unset}.product-desc{-webkit-line-clamp:6}.modal-image{min-height:260px}.modal-info{padding:24px}.hero.clean-hero{padding-top:42px}.hero h1{font-size:42px}.hero-visual{display:none}footer{grid-template-columns:1fr}.admin-header{align-items:flex-start;gap:12px;flex-direction:column}}
 @media(max-width:560px){nav{gap:9px}.topbar nav a{font-size:12px}.hero h1{font-size:36px}.hero-text{font-size:17px}.hero-actions .btn{width:100%;text-align:center}.section-title h2{font-size:30px}.product-body h3{font-size:18px}.modal{padding:10px}.modal-card{border-radius:22px}}
+
+
+/* Ajustes solicitados: produtos agrupados por categoria no admin e imagem completa no modal */
+.category-group{border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,#ffffff,#f8fbff);padding:16px;margin-bottom:18px;box-shadow:0 14px 36px rgba(15,35,87,.06)}
+.category-group-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:4px 4px 12px;border-bottom:1px solid var(--line)}
+.category-group-header h3{margin:0;color:var(--deep);font-size:22px;letter-spacing:-.025em}
+.category-group-header span{background:#eef7ff;color:#0b68ff;border:1px solid #cfe4ff;border-radius:999px;padding:8px 12px;font-weight:950;font-size:13px}
+.category-product-list{display:grid;gap:12px}
+.product-admin-item{background:#fff}
+.product-admin-item img{object-fit:cover}
+.modal-image{display:flex;align-items:center;justify-content:center;padding:14px;background:linear-gradient(135deg,#f6fbff,#eef7ff)}
+.modal-image img{width:100%;height:100%;object-fit:contain!important;border-radius:18px;background:#fff}
+@media(max-width:850px){.category-group-header{align-items:flex-start;flex-direction:column}.modal-image{min-height:300px}}

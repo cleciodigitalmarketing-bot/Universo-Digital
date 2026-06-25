@@ -133,12 +133,45 @@ function resetProductForm(){ $('productForm').reset(); $('productId').value=''; 
 $('cancelEditBtn').onclick = resetProductForm;
 
 function renderProducts(){
-  $('productsList').innerHTML = products.map(p => `
-    <div class="item">
-      <img src="${safe(p.image_url || '')}" alt="">
-      <div><h4>${safe(p.title)}</h4><p>${safe(p.categories?.name || 'Sem categoria')} • ${safe(p.description || '').slice(0,120)}${(p.description || '').length > 120 ? '...' : ''}</p></div>
-      <div class="actions"><button class="ghost" onclick="editProduct('${p.id}')">Editar</button><button class="danger" onclick="deleteProduct('${p.id}')">Remover</button></div>
-    </div>`).join('') || '<p class="empty">Nenhum produto cadastrado.</p>';
+  if(!products.length){
+    $('productsList').innerHTML = '<p class="empty">Nenhum produto cadastrado.</p>';
+    return;
+  }
+
+  const grouped = new Map();
+  products.forEach(p => {
+    const categoryName = p.categories?.name || 'Sem categoria';
+    if(!grouped.has(categoryName)) grouped.set(categoryName, []);
+    grouped.get(categoryName).push(p);
+  });
+
+  const sortedGroups = [...grouped.entries()].sort(([a], [b]) => {
+    if(a === 'Sem categoria') return 1;
+    if(b === 'Sem categoria') return -1;
+    return a.localeCompare(b, 'pt-BR');
+  });
+
+  $('productsList').innerHTML = sortedGroups.map(([categoryName, items]) => `
+    <div class="category-group">
+      <div class="category-group-header">
+        <h3>${safe(categoryName)}</h3>
+        <span>${items.length} produto${items.length === 1 ? '' : 's'}</span>
+      </div>
+      <div class="category-product-list">
+        ${items.map(p => `
+          <div class="item product-admin-item">
+            <img src="${safe(p.image_url || '')}" alt="${safe(p.title || 'Produto')}">
+            <div>
+              <h4>${safe(p.title)}</h4>
+              <p>${safe(p.badge || '')}${p.badge ? ' • ' : ''}${safe(p.description || '').slice(0,160)}${(p.description || '').length > 160 ? '...' : ''}</p>
+            </div>
+            <div class="actions">
+              <button class="ghost" onclick="editProduct('${p.id}')">Editar</button>
+              <button class="danger" onclick="deleteProduct('${p.id}')">Remover</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
 }
 window.editProduct = id => {
   const p = products.find(x => x.id === id); if(!p) return;
