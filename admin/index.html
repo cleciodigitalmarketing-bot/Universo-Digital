@@ -30,15 +30,21 @@
       <div class="stats-grid">
         <div class="stat"><strong id="statProducts">0</strong><span>Produtos</span></div>
         <div class="stat"><strong id="statCategories">0</strong><span>Categorias</span></div>
-        <div class="stat"><strong id="statVisitors">0</strong><span>Visitantes registrados</span></div>
+        <div class="stat"><strong id="statVisitors">0</strong><span>Visitantes únicos</span></div>
+        <div class="stat"><strong id="statPageViews">0</strong><span>Visualizações</span></div>
+        <div class="stat"><strong id="statToday">0</strong><span>Visitas hoje</span></div>
+        <div class="stat"><strong id="stat7Days">0</strong><span>Últimos 7 dias</span></div>
         <div class="stat"><strong id="statClicks">0</strong><span>Cliques em comprar</span></div>
       </div>
       <div class="analytics-grid">
         <div><h3>Visitantes por cidade</h3><div id="citiesList" class="metric-list"></div></div>
         <div><h3>Origem dos acessos</h3><div id="referrersList" class="metric-list"></div></div>
+        <div><h3>Dispositivos</h3><div id="devicesList" class="metric-list"></div></div>
+        <div><h3>Navegadores</h3><div id="browsersList" class="metric-list"></div></div>
         <div><h3>Produtos mais clicados</h3><div id="clicksList" class="metric-list"></div></div>
       </div>
-      <p class="hint">As cidades e origens dependem das informações disponíveis no navegador e no serviço público de geolocalização por IP.</p>
+      <p id="analyticsError" class="hint error-text"></p>
+      <p class="hint">Agora o sistema registra cada acesso com visitante único, sessão, dispositivo, navegador, origem e página acessada. Cidade/país dependem da disponibilidade do serviço público de geolocalização por IP.</p>
     </section>
 
     <div class="admin-grid">

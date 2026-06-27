@@ -14,13 +14,47 @@ function escapeHtml(text = '') {
   return String(text).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));
 }
 
+function getOrCreateStorageValue(storage, key){
+  let value = storage.getItem(key);
+  if(!value){
+    value = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    storage.setItem(key, value);
+  }
+  return value;
+}
+
+function getDeviceType(){
+  const ua = navigator.userAgent || '';
+  if(/tablet|ipad|playbook|silk/i.test(ua)) return 'Tablet';
+  if(/mobi|android|iphone|ipod/i.test(ua)) return 'Celular';
+  return 'Computador';
+}
+
+function getBrowserName(){
+  const ua = navigator.userAgent || '';
+  if(/Edg\//.test(ua)) return 'Edge';
+  if(/OPR\//.test(ua)) return 'Opera';
+  if(/Chrome\//.test(ua) && !/Edg\//.test(ua)) return 'Chrome';
+  if(/Safari\//.test(ua) && !/Chrome\//.test(ua)) return 'Safari';
+  if(/Firefox\//.test(ua)) return 'Firefox';
+  return 'Outro';
+}
+
 async function getGeoInfo(){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1500);
   try{
-    const res = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+    const res = await fetch('https://ipapi.co/json/', { cache: 'no-store', signal: controller.signal });
     if(!res.ok) return {};
     const data = await res.json();
-    return { city: data.city || null, region: data.region || null, country: data.country_name || null };
+    return {
+      city: data.city || null,
+      region: data.region || null,
+      country: data.country_name || null,
+      ip_provider: 'ipapi.co'
+    };
   }catch{ return {}; }
+  finally{ clearTimeout(timeout); }
 }
 
 function getUtm(){
@@ -28,35 +62,103 @@ function getUtm(){
   return { utm_source: p.get('utm_source'), utm_medium: p.get('utm_medium'), utm_campaign: p.get('utm_campaign') };
 }
 
+function getOriginType(referrer){
+  const source = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase();
+  const ref = (referrer || '').toLowerCase();
+  const text = `${source} ${ref}`;
+  if(!referrer && !source) return 'Acesso direto';
+  if(text.includes('google')) return 'Google';
+  if(text.includes('instagram')) return 'Instagram';
+  if(text.includes('facebook') || text.includes('fb.')) return 'Facebook';
+  if(text.includes('whatsapp') || text.includes('wa.me')) return 'WhatsApp';
+  if(text.includes('pinterest')) return 'Pinterest';
+  if(text.includes('youtube')) return 'YouTube';
+  if(source) return source;
+  try { return new URL(referrer).hostname.replace('www.',''); } catch { return 'Outro'; }
+}
+
+async function insertVisit(payload){
+  let { data, error } = await supabaseClient.from('site_visits').insert(payload).select('id').single();
+  if(error){
+    // Fallback para bancos que ainda não receberam o SQL atualizado.
+    const oldPayload = {
+      page: payload.page,
+      referrer: payload.referrer,
+      utm_source: payload.utm_source,
+      utm_medium: payload.utm_medium,
+      utm_campaign: payload.utm_campaign,
+      city: payload.city,
+      region: payload.region,
+      country: payload.country,
+      language: payload.language,
+      timezone: payload.timezone,
+      user_agent: payload.user_agent
+    };
+    ({ data, error } = await supabaseClient.from('site_visits').insert(oldPayload).select('id').single());
+  }
+  if(error) throw error;
+  return data;
+}
+
 async function trackVisit(){
   try{
-    const currentSession = sessionStorage.getItem('impulso_visit_id');
-    if(currentSession){ visitId = currentSession; return; }
+    const visitorKey = getOrCreateStorageValue(localStorage, 'evoluahub_visitor_key');
+    const sessionId = getOrCreateStorageValue(sessionStorage, 'evoluahub_session_id');
+    const referrer = document.referrer || '';
     const geo = await getGeoInfo();
     const payload = {
-      page: location.pathname,
-      referrer: document.referrer || 'Acesso direto',
+      visitor_key: visitorKey,
+      session_id: sessionId,
+      page: location.pathname || '/',
+      page_title: document.title || null,
+      referrer: referrer || 'Acesso direto',
+      origin_type: getOriginType(referrer),
       language: navigator.language || null,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
       user_agent: navigator.userAgent || null,
+      device_type: getDeviceType(),
+      browser: getBrowserName(),
+      screen_size: `${screen.width}x${screen.height}`,
       ...getUtm(),
       ...geo
     };
-    const { data, error } = await supabaseClient.from('site_visits').insert(payload).select('id').single();
-    if(!error && data?.id){ visitId = data.id; sessionStorage.setItem('impulso_visit_id', data.id); }
-  }catch(err){ console.warn('Analytics indisponível:', err.message); }
+    const data = await insertVisit(payload);
+    if(data?.id) visitId = data.id;
+  }catch(err){
+    console.warn('Analytics indisponível:', err.message || err);
+  }
 }
 
 async function trackProductClick(product){
   try{
-    await supabaseClient.from('product_clicks').insert({
+    const payload = {
       product_id: product.id,
       product_title: product.title,
       visit_id: visitId,
+      visitor_key: localStorage.getItem('evoluahub_visitor_key'),
+      session_id: sessionStorage.getItem('evoluahub_session_id'),
+      page: location.pathname || '/',
       referrer: document.referrer || 'Acesso direto',
+      origin_type: getOriginType(document.referrer || ''),
+      device_type: getDeviceType(),
+      browser: getBrowserName(),
       ...getUtm()
-    });
-  }catch(err){ console.warn('Clique não registrado:', err.message); }
+    };
+    let { error } = await supabaseClient.from('product_clicks').insert(payload);
+    if(error){
+      const oldPayload = {
+        product_id: payload.product_id,
+        product_title: payload.product_title,
+        visit_id: payload.visit_id,
+        referrer: payload.referrer,
+        utm_source: payload.utm_source,
+        utm_medium: payload.utm_medium,
+        utm_campaign: payload.utm_campaign
+      };
+      ({ error } = await supabaseClient.from('product_clicks').insert(oldPayload));
+    }
+    if(error) throw error;
+  }catch(err){ console.warn('Clique não registrado:', err.message || err); }
 }
 
 async function loadData() {
@@ -151,7 +253,6 @@ function closeProductModal(){
 
 document.querySelectorAll('[data-close-modal]').forEach(el => el.addEventListener('click', closeProductModal));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !productModal.classList.contains('hidden')) closeProductModal(); });
-
 
 searchInput.addEventListener('input', renderProducts);
 trackVisit();

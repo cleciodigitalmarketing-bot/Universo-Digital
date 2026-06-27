@@ -46,3 +46,4 @@ footer{width:min(1280px,94%);display:grid;grid-template-columns:auto 1fr;justify
 .modal-image{display:flex;align-items:center;justify-content:center;padding:14px;background:linear-gradient(135deg,#f6fbff,#eef7ff)}
 .modal-image img{width:100%;height:100%;object-fit:contain!important;border-radius:18px;background:#fff}
 @media(max-width:850px){.category-group-header{align-items:flex-start;flex-direction:column}.modal-image{min-height:300px}}
+.error-text{color:#dc2626;font-weight:800}.stats-grid{grid-template-columns:repeat(4,1fr)}@media(min-width:851px){.analytics-grid{grid-template-columns:repeat(3,1fr)}}

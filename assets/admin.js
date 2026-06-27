@@ -6,6 +6,7 @@ let products = [];
 function safe(text = '') { return String(text).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m])); }
 function fileExt(name){ return (name.split('.').pop() || 'jpg').toLowerCase(); }
 function originLabel(v){
+  if(v.origin_type) return v.origin_type;
   if(v.utm_source) return `${v.utm_source}${v.utm_campaign ? ' / ' + v.utm_campaign : ''}`;
   if(!v.referrer || v.referrer === 'Acesso direto') return 'Acesso direto';
   try { return new URL(v.referrer).hostname.replace('www.',''); } catch { return v.referrer; }
@@ -14,6 +15,20 @@ function countBy(list, fn){
   const map = new Map();
   list.forEach(item => { const key = fn(item) || 'Não identificado'; map.set(key, (map.get(key) || 0) + 1); });
   return [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+}
+function uniqueCount(list, key){
+  return new Set(list.map(item => item?.[key]).filter(Boolean)).size;
+}
+function isToday(value){
+  if(!value) return false;
+  const d = new Date(value);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+function daysAgo(value, days){
+  if(!value) return false;
+  const d = new Date(value).getTime();
+  return d >= Date.now() - (days * 24 * 60 * 60 * 1000);
 }
 function renderMetric(el, rows){
   $(el).innerHTML = rows.length ? rows.map(([label,total]) => `<div class="metric"><span>${safe(label)}</span><b>${total}</b></div>`).join('') : '<p class="empty small">Sem dados ainda.</p>';
@@ -46,19 +61,28 @@ async function loadProducts(){
 }
 async function loadAnalytics(){
   const [{ data: visits, error: visitsError }, { data: clicks, error: clicksError }] = await Promise.all([
-    sb.from('site_visits').select('*').order('created_at', { ascending: false }).limit(1000),
-    sb.from('product_clicks').select('*').order('created_at', { ascending: false }).limit(1000)
+    sb.from('site_visits').select('*').order('created_at', { ascending: false }).limit(5000),
+    sb.from('product_clicks').select('*').order('created_at', { ascending: false }).limit(5000)
   ]);
   if(visitsError || clicksError){
     renderMetric('citiesList', []); renderMetric('referrersList', []); renderMetric('clicksList', []);
+    renderMetric('devicesList', []); renderMetric('browsersList', []);
+    $('analyticsError').textContent = `Erro ao carregar analytics: ${visitsError?.message || clicksError?.message || 'verifique as políticas RLS no Supabase.'}`;
     return;
   }
+  $('analyticsError').textContent = '';
   const v = visits || [], c = clicks || [];
-  $('statVisitors').textContent = v.length;
+  const uniqueVisitors = uniqueCount(v, 'visitor_key') || v.length;
+  $('statVisitors').textContent = uniqueVisitors;
+  $('statPageViews').textContent = v.length;
+  $('statToday').textContent = v.filter(x => isToday(x.created_at)).length;
+  $('stat7Days').textContent = v.filter(x => daysAgo(x.created_at, 7)).length;
   $('statClicks').textContent = c.length;
   renderMetric('citiesList', countBy(v, x => [x.city, x.region, x.country].filter(Boolean).join(' - ')));
   renderMetric('referrersList', countBy(v, originLabel));
   renderMetric('clicksList', countBy(c, x => x.product_title));
+  renderMetric('devicesList', countBy(v, x => x.device_type));
+  renderMetric('browsersList', countBy(v, x => x.browser));
 }
 function renderCategorySelect(){
   $('categorySelect').innerHTML = '<option value="">Selecione</option>' + categories.map(c => `<option value="${c.id}">${safe(c.name)}</option>`).join('');

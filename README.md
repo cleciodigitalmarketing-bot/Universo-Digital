@@ -1,71 +1,42 @@
-# EvoluaHub - Supabase Nível 3
+# EvoluaHub - versão atualizada
 
-Projeto de vitrine/e-commerce para produtos digitais afiliados, com layout minimalista, painel administrativo e Supabase.
+Atualização aplicada:
 
-## Recursos
+- Analytics mais confiável.
+- Registro de cada acesso real ao site.
+- Visitante único por navegador.
+- Sessão do visitante.
+- Página acessada.
+- Origem do acesso: direto, Google, Instagram, Facebook, WhatsApp, Pinterest, YouTube etc.
+- Dispositivo: celular, tablet ou computador.
+- Navegador: Chrome, Edge, Safari, Firefox, Opera ou outro.
+- Cliques em comprar com vínculo ao visitante/sessão.
+- Dashboard com visitantes únicos, visualizações, visitas de hoje, últimos 7 dias e cliques.
 
-- Layout branco, minimalista e responsivo.
-- Logo profissional em SVG: `assets/logo.svg`.
-- Produtos separados por categorias.
-- Descrição visível em cada produto.
-- Botão **Comprar agora** redirecionando para o link de afiliado.
-- Painel admin com login Supabase Auth.
-- Cadastro, edição e remoção de categorias.
-- Cadastro, edição e remoção de produtos.
-- Upload e troca de imagem usando Supabase Storage.
-- Dashboard com:
-  - total de produtos;
-  - total de categorias;
-  - visitantes registrados;
-  - cliques no botão comprar;
-  - visitantes por cidade;
-  - origem dos acessos/referrer/UTM;
-  - produtos mais clicados.
+## Passo obrigatório no Supabase
 
-## Configuração
+Antes de publicar ou depois de publicar, execute o arquivo:
 
-1. Crie um projeto no Supabase.
-2. Abra `supabase/schema.sql` e execute todo o SQL no **SQL Editor**.
-3. Crie um usuário em **Authentication > Users** e confirme o e-mail.
-4. Edite `assets/config.js`:
+`supabase/schema.sql`
 
-```js
-window.SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-window.SUPABASE_ANON_KEY = 'SUA_ANON_PUBLIC_KEY';
-```
+no SQL Editor do Supabase.
 
-5. Envie o projeto para o GitHub e faça deploy no Cloudflare Pages.
+Esse SQL é seguro para atualizar o banco existente porque usa:
 
-## Cloudflare Pages
+- `create table if not exists`
+- `alter table add column if not exists`
+- `create index if not exists`
 
-Como o projeto é HTML, CSS e JavaScript puro:
+Ou seja, ele não apaga os produtos, categorias ou visitas antigas.
 
-- Framework preset: None / Nenhum
-- Build command: vazio
-- Build output directory: `/` ou vazio
-- Root directory: use a pasta do projeto se o `index.html` não estiver na raiz do repositório
+## Como publicar na Cloudflare Pages
 
-## Observação sobre visitantes
+1. Suba estes arquivos atualizados no GitHub.
+2. Aguarde o deploy automático da Cloudflare Pages.
+3. Abra o site em uma aba anônima ou no celular.
+4. Depois entre no `/admin/` e clique em atualizar a página.
+5. O dashboard deve começar a registrar as novas visitas.
 
-A cidade do visitante é estimada por IP usando uma consulta pública no navegador. Em alguns casos pode aparecer como “Não identificado”, dependendo da rede, VPN, bloqueios de privacidade ou falha do serviço externo.
+## Observação importante
 
-
-## Atualização visual e conversão
-
-- Cards dos produtos ajustados para mostrar a descrição completa, sem cortar o texto.
-- Adicionados gatilhos mentais de segurança, clareza, evolução, acesso digital e compra na página oficial.
-- Criada faixa de conversão antes da vitrine e chamada final para incentivar a escolha do produto.
-- Grade ajustada para 3 produtos por linha no desktop, deixando mais espaço para leitura.
-
-## Atualização visual v2.0
-
-Esta versão foi refinada com a marca **EvoluaHub**, nova logomarca em SVG, seções adicionais de copywriting, gatilhos de confiança e cards de produto com descrição completa visível.
-
-Principais ajustes:
-- Novo nome da marca: EvoluaHub.
-- Logomarca vetorial exclusiva em `assets/logo.svg`.
-- Hero com copy principal: “Aprenda hoje. Evolua para sempre.”
-- Seção “Por que escolher a EvoluaHub?”.
-- Cards de produto com descrição completa, sem corte.
-- Rodapé limpo, sem redes sociais ou contatos não utilizados.
-- Layout branco, minimalista, com efeitos suaves e foco em conversão.
+Visitas antigas que não foram gravadas antes da correção não podem ser recuperadas pelo site, porque elas nunca chegaram ao Supabase. A partir desta versão, os novos acessos passam a ser registrados com mais informações.
