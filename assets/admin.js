@@ -65,24 +65,32 @@ async function loadAnalytics(){
     sb.from('product_clicks').select('*').order('created_at', { ascending: false }).limit(5000)
   ]);
   if(visitsError || clicksError){
-    renderMetric('citiesList', []); renderMetric('referrersList', []); renderMetric('clicksList', []);
-    renderMetric('devicesList', []); renderMetric('browsersList', []);
+    ['citiesList','referrersList','clicksList','devicesList','browsersList','osList','pagesList','recentVisitsList'].forEach(id => $(id) && renderMetric(id, []));
     $('analyticsError').textContent = `Erro ao carregar analytics: ${visitsError?.message || clicksError?.message || 'verifique as políticas RLS no Supabase.'}`;
     return;
   }
   $('analyticsError').textContent = '';
-  const v = visits || [], c = clicks || [];
+  const allVisits = visits || [], c = clicks || [];
+  const v = allVisits.filter(x => !x.event_type || x.event_type === 'page_view');
   const uniqueVisitors = uniqueCount(v, 'visitor_key') || v.length;
+  const uniqueSessions = uniqueCount(v, 'session_id') || v.length;
   $('statVisitors').textContent = uniqueVisitors;
   $('statPageViews').textContent = v.length;
   $('statToday').textContent = v.filter(x => isToday(x.created_at)).length;
   $('stat7Days').textContent = v.filter(x => daysAgo(x.created_at, 7)).length;
   $('statClicks').textContent = c.length;
+  if($('statSessions')) $('statSessions').textContent = uniqueSessions;
+  if($('statConversion')) $('statConversion').textContent = v.length ? `${Math.round((c.length / v.length) * 100)}%` : '0%';
   renderMetric('citiesList', countBy(v, x => [x.city, x.region, x.country].filter(Boolean).join(' - ')));
   renderMetric('referrersList', countBy(v, originLabel));
   renderMetric('clicksList', countBy(c, x => x.product_title));
   renderMetric('devicesList', countBy(v, x => x.device_type));
   renderMetric('browsersList', countBy(v, x => x.browser));
+  if($('osList')) renderMetric('osList', countBy(v, x => x.os));
+  if($('pagesList')) renderMetric('pagesList', countBy(v, x => x.page || x.full_url));
+  if($('recentVisitsList')){
+    $('recentVisitsList').innerHTML = v.slice(0,8).map(x => `<div class="metric"><span>${safe(new Date(x.created_at).toLocaleString('pt-BR'))}<br><small>${safe(x.page || '/')} • ${safe(x.device_type || 'Não identificado')} • ${safe(originLabel(x))}</small></span><b>${safe(x.city || x.country || '—')}</b></div>`).join('') || '<p class="empty small">Sem dados ainda.</p>';
+  }
 }
 function renderCategorySelect(){
   $('categorySelect').innerHTML = '<option value="">Selecione</option>' + categories.map(c => `<option value="${c.id}">${safe(c.name)}</option>`).join('');

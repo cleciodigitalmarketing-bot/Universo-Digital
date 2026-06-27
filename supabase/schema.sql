@@ -145,3 +145,16 @@ from (values
 ('🎓 Cursos Profissionais')
 ) as v(name)
 where not exists (select 1 from public.categories c where c.name = v.name);
+
+-- Analytics 2.0 - colunas extras para registro robusto de acessos.
+alter table public.site_visits add column if not exists event_type text default 'page_view';
+alter table public.site_visits add column if not exists full_url text;
+alter table public.site_visits add column if not exists viewport_size text;
+alter table public.site_visits add column if not exists os text;
+
+alter table public.product_clicks add column if not exists os text;
+
+create index if not exists idx_site_visits_event_type on public.site_visits(event_type);
+create index if not exists idx_site_visits_page on public.site_visits(page);
+create index if not exists idx_site_visits_origin_type on public.site_visits(origin_type);
+create index if not exists idx_site_visits_device_type on public.site_visits(device_type);

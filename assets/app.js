@@ -77,56 +77,83 @@ function getOriginType(referrer){
   try { return new URL(referrer).hostname.replace('www.',''); } catch { return 'Outro'; }
 }
 
-async function insertVisit(payload){
-  let { data, error } = await supabaseClient.from('site_visits').insert(payload).select('id').single();
-  if(error){
-    // Fallback para bancos que ainda não receberam o SQL atualizado.
-    const oldPayload = {
-      page: payload.page,
-      referrer: payload.referrer,
-      utm_source: payload.utm_source,
-      utm_medium: payload.utm_medium,
-      utm_campaign: payload.utm_campaign,
-      city: payload.city,
-      region: payload.region,
-      country: payload.country,
-      language: payload.language,
-      timezone: payload.timezone,
-      user_agent: payload.user_agent
-    };
-    ({ data, error } = await supabaseClient.from('site_visits').insert(oldPayload).select('id').single());
-  }
+
+function getOSName(){
+  const ua = navigator.userAgent || '';
+  if(/Windows NT/i.test(ua)) return 'Windows';
+  if(/Android/i.test(ua)) return 'Android';
+  if(/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+  if(/Mac OS X/i.test(ua)) return 'macOS';
+  if(/Linux/i.test(ua)) return 'Linux';
+  return 'Outro';
+}
+
+function buildVisitPayload(extra = {}){
+  const visitorKey = getOrCreateStorageValue(localStorage, 'evoluahub_visitor_key');
+  const sessionId = getOrCreateStorageValue(sessionStorage, 'evoluahub_session_id');
+  const referrer = document.referrer || '';
+  return {
+    visitor_key: visitorKey,
+    session_id: sessionId,
+    event_type: 'page_view',
+    page: location.pathname || '/',
+    full_url: location.href,
+    page_title: document.title || null,
+    referrer: referrer || 'Acesso direto',
+    origin_type: getOriginType(referrer),
+    language: navigator.language || null,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+    user_agent: navigator.userAgent || null,
+    device_type: getDeviceType(),
+    browser: getBrowserName(),
+    os: getOSName(),
+    screen_size: `${screen.width}x${screen.height}`,
+    viewport_size: `${window.innerWidth}x${window.innerHeight}`,
+    ...getUtm(),
+    ...extra
+  };
+}
+
+async function sendSupabaseInsert(table, payload){
+  // Importante: não usamos .select() aqui. Usuário anônimo pode INSERIR,
+  // mas não pode LER analytics por segurança; .select() fazia o registro falhar.
+  const { error } = await supabaseClient.from(table).insert(payload);
   if(error) throw error;
-  return data;
+}
+
+function sendRestFallback(table, payload){
+  try{
+    const url = `${window.SUPABASE_URL}/rest/v1/${table}`;
+    const body = JSON.stringify(payload);
+    const headers = {
+      apikey: window.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    };
+    // keepalive ajuda a não perder o registro quando a página muda/fecha.
+    return fetch(url, { method: 'POST', headers, body, keepalive: true }).catch(() => null);
+  }catch{ return null; }
+}
+
+async function safeInsert(table, payload){
+  try{
+    await sendSupabaseInsert(table, payload);
+    return true;
+  }catch(err){
+    console.warn(`Falha pelo cliente Supabase em ${table}; tentando fallback REST:`, err.message || err);
+    await sendRestFallback(table, payload);
+    return false;
+  }
 }
 
 async function trackVisit(){
-  try{
-    const visitorKey = getOrCreateStorageValue(localStorage, 'evoluahub_visitor_key');
-    const sessionId = getOrCreateStorageValue(sessionStorage, 'evoluahub_session_id');
-    const referrer = document.referrer || '';
-    const geo = await getGeoInfo();
-    const payload = {
-      visitor_key: visitorKey,
-      session_id: sessionId,
-      page: location.pathname || '/',
-      page_title: document.title || null,
-      referrer: referrer || 'Acesso direto',
-      origin_type: getOriginType(referrer),
-      language: navigator.language || null,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
-      user_agent: navigator.userAgent || null,
-      device_type: getDeviceType(),
-      browser: getBrowserName(),
-      screen_size: `${screen.width}x${screen.height}`,
-      ...getUtm(),
-      ...geo
-    };
-    const data = await insertVisit(payload);
-    if(data?.id) visitId = data.id;
-  }catch(err){
-    console.warn('Analytics indisponível:', err.message || err);
-  }
+  // Pega cidade/país somente se responder rápido; se falhar, a visita é registrada mesmo assim.
+  const quickGeo = await Promise.race([
+    getGeoInfo(),
+    new Promise(resolve => setTimeout(() => resolve({}), 700))
+  ]);
+  await safeInsert('site_visits', buildVisitPayload(quickGeo || {}));
 }
 
 async function trackProductClick(product){
@@ -142,22 +169,10 @@ async function trackProductClick(product){
       origin_type: getOriginType(document.referrer || ''),
       device_type: getDeviceType(),
       browser: getBrowserName(),
+      os: getOSName(),
       ...getUtm()
     };
-    let { error } = await supabaseClient.from('product_clicks').insert(payload);
-    if(error){
-      const oldPayload = {
-        product_id: payload.product_id,
-        product_title: payload.product_title,
-        visit_id: payload.visit_id,
-        referrer: payload.referrer,
-        utm_source: payload.utm_source,
-        utm_medium: payload.utm_medium,
-        utm_campaign: payload.utm_campaign
-      };
-      ({ error } = await supabaseClient.from('product_clicks').insert(oldPayload));
-    }
-    if(error) throw error;
+    await safeInsert('product_clicks', payload);
   }catch(err){ console.warn('Clique não registrado:', err.message || err); }
 }
 
